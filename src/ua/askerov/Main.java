@@ -92,8 +92,10 @@ public class Main {
         // чотири 1-палубних
         for (int i = 0; i < 4; i++) {
             showBattlefield(battlefield, playerName);
-//            placeBattleship(battlefield, BattleshipTypes.a1x1);
+            placeBattleship(battlefield, BattleshipTypes.a1x1);
         }
+        showBattlefield(battlefield, playerName);
+        System.out.println("Press the Enter to continue..");
     }
 
     private static void showBattlefield(char[][] battlefield, String playerName) {
@@ -130,80 +132,90 @@ public class Main {
         System.out.println(stringBuilder.toString());
     }
 
+    private static void placeBattleship(char[][] battlefield, BattleshipTypes battleshipType) {
+        switch (battleshipType) {
+            case a4x1, a3x1, a2x1 -> {
+                int[][] battleshipLocation = new int[2][2];
+                do {
+                    int[] coordinateA;
+                    int[] coordinateB;
+
+                    coordinateA = getCoordinates("F9", 1);
+                    // TODO: interactive updating of a map (place an '*' cursor to highlight the area)
+                    coordinateB = getCoordinates("C9", 2);
+
+                    battleshipLocation[0][0] = coordinateA[0];
+                    battleshipLocation[0][1] = coordinateA[1];
+                    battleshipLocation[1][0] = coordinateB[0];
+                    battleshipLocation[1][1] = coordinateB[1];
+                } while (!isPlacementLegal(battleshipLocation, battleshipType));
+
+                // TODO: if placementIsLegal now u should "place" the ships ("s") in every corresponded tile of the battlefield
+            }
+            case a1x1 -> {
+                int[] battleshipLocation = new int[2];
+                battleshipLocation = getCoordinates("F9", 0);
+                battlefield[battleshipLocation[0]][battleshipLocation[1]] = ship;
+            }
+        }
+    }
+
     private static boolean isPlacementLegal(int[][] battleshipLocation, BattleshipTypes battleshipType) {
         int x1 = battleshipLocation[0][0];
         int y1 = battleshipLocation[0][1];
         int x2 = battleshipLocation[1][0];
         int y2 = battleshipLocation[1][1];
+        int battleshipLength = battleshipType.length;
 
+        // чи корабель розміщено діагонально
         if (x1 != x2 && y1 != y2) {
             System.out.println("\tShip can't be placed diagonally\n");
             return false;
         }
 
+        // чи корабель відповідає своїм розмірам
         int length = (int) Math.sqrt(Math.pow(Math.max(x1, x2) - Math.min(x1, x2), 2) + Math.pow(Math.max(y1, y2) - Math.min(y1, y2), 2)) + 1;
-        if (length > battleshipType.length) {
-            System.out.printf("\tShip \"" + battleshipType + "\" is %d tiles shorter\n", length - battleshipType.length);
+        if (length > battleshipLength) {
+            System.out.printf("\tShip \"" + battleshipType + "\" is %d tiles shorter\n", length - battleshipLength);
             return false;
-        } else if (length < battleshipType.length) {
-            System.out.printf("\tShip \"" + battleshipType + "\" is %d tiles longer\n", battleshipType.length - length);
+        } else if (length < battleshipLength) {
+            System.out.printf("\tShip \"" + battleshipType + "\" is %d tiles longer\n", battleshipLength - length);
             return false;
         }
+
         return true;
     }
 
-//    private static void placeBattleship(char[][] battlefield, BattleshipTypes battleshipType) {
-//        if (battleshipType == BattleshipTypes.a1x1) {
-//            int[] battleshipLocation;
-//            do {
-//                battleshipLocation = getLocation(battleshipType);
-//            } while (!isPlacementLegal(battleshipLocation, battleshipType));
-//        } else {
-//            int[][] battleshipLocation;
-//            do {
-//                battleshipLocation = getLocation(battleshipType);
-//            } while (!isPlacementLegal(battleshipLocation, battleshipType));
-//            battlefield[battleshipLocation[0][0]][battleshipLocation[0][1]] = ship;
-//            battlefield[battleshipLocation[1][0]][battleshipLocation[1][1]] = ship;
-//        }
-//    }
-
     private static int[][] getLocation(BattleshipTypes battleshipType) {
         int[][] location = new int[2][2];
-        int[] coordinateA;
-        int[] coordinateB;
-
-        try {
-            coordinateA = getCoordinates("F9", 1);
-            // TODO: interactive updating of a map (place an '*' cursor to highlight the area)
-            coordinateB = getCoordinates("C9", 2);
-            location[0][0] = coordinateA[0];
-            location[0][1] = coordinateA[1];
-            location[1][0] = coordinateB[0];
-            location[1][1] = coordinateB[1];
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
         return location;
     }
 
-    private static int[] getCoordinates(String example, int stageNumber) throws IOException {
+    private static int[] getCoordinates(String example, int stageNumber) {
         int[] coordinates = new int[2];
         String input;
         char[] inputParse;
         do {
             // просимо користувача розмістити корабель
-            System.out.print("Specify the coordinates [" + example + "] (" + stageNumber + "/2): ");
-            input = bufferedReader.readLine();
-            while (!pattern.matcher(input).matches()) {
-                System.out.print("Invalid input. Try again: ");
-                input = bufferedReader.readLine();
+            if (stageNumber == 0) {
+                System.out.print("Specify the coordinates [" + example + "]: ");
+            } else {
+                System.out.print("Specify the coordinates [" + example + "] (" + stageNumber + "/2): ");
             }
+            try {
+                input = bufferedReader.readLine();
+                while (!pattern.matcher(input).matches() || input.equals("\n")) {
+                    System.out.print("Invalid input. Try again: ");
+                    input = bufferedReader.readLine();
+                }
 
-            // парсимо значення
-            inputParse = input.toCharArray();
-            coordinates[0] = inputParse[0] - 65;
-            coordinates[1] = inputParse[1] - 48;
+                // парсимо значення
+                inputParse = input.toCharArray();
+                coordinates[0] = inputParse[1] - 48;
+                coordinates[1] = inputParse[0] - 65;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         } while (!areCoordinatesLegal(battlefield, coordinates));
         return coordinates;
     }
